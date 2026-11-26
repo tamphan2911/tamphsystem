@@ -477,7 +477,9 @@
       if (kinds.has("day")) details.push("Daytime begins");
       if (kinds.has("night")) details.push("Nighttime begins");
       const kind = kinds.has("day") ? "day" : kinds.has("night") ? "night" : kinds.has("care") ? "care" : "date";
-      const label = `${formatTime(date)}${kinds.has("date") || kinds.has("care") ? ` · ${dateLabel.format(date)}` : ""}${details.length ? ` · ${details.join(" · ")}` : ""}`;
+      const checkpointTime = kinds.has("date") ? "0:00 AM" : formatTime(date);
+      const calendarDate = kinds.has("date") && !kinds.has("care") ? ` · ${dateLabel.format(date)}` : "";
+      const label = `${checkpointTime}${calendarDate}${details.length ? ` · ${details.join(" · ")}` : ""}`;
       return { date, kind, label };
     });
   }
