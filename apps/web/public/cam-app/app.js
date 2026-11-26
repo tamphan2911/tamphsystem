@@ -1536,8 +1536,9 @@
       if (last?.key === key) last.items.push(item);
       else groups.push({ key, at: item.at, items: [item] });
     });
-    const todayKey = zonedDateKey(now());
-    const marker = `<div class="vaccine-today-marker"><span>Today · ${escapeHtml(babyAgeLabel())}</span></div>`;
+    const today = now();
+    const todayKey = zonedDateKey(today);
+    const marker = `<div class="vaccine-today-marker"><span>Today · ${escapeHtml(formatCalendarDate(today))} · ${escapeHtml(babyAgeLabel())}</span></div>`;
     let inserted = false;
     const html = groups.map((group) => {
       const placeMarker = !inserted && group.key >= todayKey;
