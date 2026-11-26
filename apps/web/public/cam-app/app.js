@@ -1496,6 +1496,7 @@
 
   function vaccineDoseRow(series, dose, order, record = null, custom = false, timeView = false) {
     const total = series.doses.length;
+    const detail = dose.detail === "Một mũi" && total === 1 ? "" : dose.detail;
     const completed = record?.data?.status === "completed";
     const plannedAt = record?.data?.dueAt;
     const recommendedAt = custom ? null : vaccineRecommendedAt(dose);
@@ -1508,15 +1509,17 @@
     const origin = record?.data?.originCountry?.trim() || "Not recorded";
     return `<article class="vaccine-dose ${completed ? "completed" : ""} ${timeView ? "in-timeline" : ""}" style="--series-color:var(--vaccine-${series.tone});--series-bg:var(--vaccine-${series.tone}-soft)">
       <span class="vaccine-dose-order">${order}<small>/${total}</small></span>
-      <div class="vaccine-dose-info"><strong>${escapeHtml(timeView ? series.name : dose.detail || `Dose ${order}`)}</strong>${timeView && dose.detail ? `<small class="vaccine-dose-kind">${escapeHtml(dose.detail)}</small>` : ""}<small>${escapeHtml(dose.timing || "Clinic advised")}</small><span class="vaccine-status ${completed ? "completed" : overdue ? "overdue" : ""}">${escapeHtml(status)}</span><small class="vaccine-product-line">Product: ${escapeHtml(product)} · Origin: ${escapeHtml(origin)}</small>${record?.data?.note ? `<small class="vaccine-dose-note">${escapeHtml(record.data.note)}</small>` : ""}</div>
+      <div class="vaccine-dose-info">${timeView || detail || total > 1 ? `<strong>${escapeHtml(timeView ? series.name : detail || `Dose ${order}`)}</strong>` : ""}${timeView && detail ? `<small class="vaccine-dose-kind">${escapeHtml(detail)}</small>` : ""}${timeView || total > 1 ? `<small>${escapeHtml(dose.timing || "Clinic advised")}</small>` : ""}<span class="vaccine-status ${completed ? "completed" : overdue ? "overdue" : ""}">${escapeHtml(status)}</span><small class="vaccine-product-line">Product: ${escapeHtml(product)}</small><small class="vaccine-product-line">Origin: ${escapeHtml(origin)}</small>${record?.data?.note ? `<small class="vaccine-dose-note">${escapeHtml(record.data.note)}</small>` : ""}</div>
       <button class="vaccine-dose-action" type="button" ${record ? `data-vaccine-open="${escapeHtml(record.id)}"` : custom ? `data-vaccine-custom="${escapeHtml(series.id)}" data-vaccine-order="${order}"` : `data-vaccine-plan="${escapeHtml(id)}"`}>${completed ? "View" : plannedAt ? "Edit" : "Plan"}</button>
     </article>`;
   }
 
   function vaccineSeriesCard(series, records = [], custom = false) {
     const completed = records.filter((record) => record?.data?.status === "completed").length;
+    const singleDose = series.doses.length === 1;
+    const summary = singleDose ? `One dose · ${series.doses[0].timing || "Clinic advised"}` : `${series.doses.length} doses · ${completed} given`;
     return `<section class="vaccine-series" style="--series-color:var(--vaccine-${series.tone});--series-bg:var(--vaccine-${series.tone}-soft)">
-      <div class="vaccine-series-heading"><div><strong>${escapeHtml(series.name)}</strong><small>${series.doses.length === 1 ? "One dose" : `${series.doses.length} doses · ${completed} given`}</small></div><span class="vaccine-series-progress">${completed}/${series.doses.length}</span></div>
+      <div class="vaccine-series-heading"><div><strong>${escapeHtml(series.name)}</strong><small>${escapeHtml(summary)}</small></div><span class="vaccine-series-progress">${completed}/${series.doses.length}</span></div>
       ${series.note ? `<p class="vaccine-series-note">${escapeHtml(series.note)}</p>` : ""}
       <div class="vaccine-dose-list">${series.doses.map((dose, index) => vaccineDoseRow(series, dose, index + 1, records[index], custom)).join("")}</div>
     </section>`;
