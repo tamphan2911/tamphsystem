@@ -137,6 +137,7 @@
     return `${hour % 12 || 12}${compact && minute === 0 ? "" : `:${String(minute).padStart(2, "0")}`} ${hour < 12 ? "AM" : "PM"}`;
   };
   const atClock = (date, clock) => zonedClockOnKey(zonedDateKey(date), clock);
+  const formatCalendarDate = (date) => new Intl.DateTimeFormat("en", { timeZone: selectedTimeZone(), weekday: "short", day: "numeric", month: "short", year: "numeric" }).format(new Date(date));
   const formatDateTime = (date) => new Intl.DateTimeFormat("en", { timeZone: selectedTimeZone(), weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(date));
   const toLocalDateTimeValue = (date) => {
     const value = zonedParts(date);
@@ -1500,8 +1501,8 @@
     const recommendedAt = custom ? null : vaccineRecommendedAt(dose);
     const status = completed ? `Given ${formatDateTime(record.data.administeredAt || record.timestamp)}`
       : plannedAt ? `Appointment · ${formatDateTime(plannedAt)}`
-        : recommendedAt ? `Recommended · ${formatDateTime(recommendedAt)}` : "Appointment needed";
-    const overdue = !completed && (plannedAt || recommendedAt) && new Date(plannedAt || recommendedAt) < now();
+        : recommendedAt ? `Rec. · ${formatCalendarDate(recommendedAt)}` : "Appointment needed";
+    const overdue = !completed && (plannedAt ? new Date(plannedAt) < now() : recommendedAt && zonedDateKey(recommendedAt) < zonedDateKey(now()));
     const id = vaccinePlanId(series.id, order);
     const product = record?.data?.productName?.trim() || "Not recorded";
     const origin = record?.data?.originCountry?.trim() || "Not recorded";
@@ -2525,7 +2526,7 @@
     const existing = vaccinePlanRecord(planId);
     if (existing) { openVaccineDetails(existing.id); return; }
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Recommended dose ${order} of ${series.doses.length}</p><h2 id="sheet-title">${escapeHtml(series.name)}</h2><p class="sheet-subtitle">${escapeHtml(dose.timing)} · ${escapeHtml(formatDateTime(recommendedAt))}. Confirm the appointment with Cam’s clinic.</p></header>
+      <header class="sheet-header"><p class="eyebrow">Rec. dose ${order} of ${series.doses.length}</p><h2 id="sheet-title">${escapeHtml(series.name)}</h2><p class="sheet-subtitle">${escapeHtml(dose.timing)} · ${escapeHtml(formatCalendarDate(recommendedAt))}. Confirm the appointment with Cam’s clinic.</p></header>
       ${dose.detail ? `<p class="vaccine-plan-detail">${escapeHtml(dose.detail)}</p>` : ""}
       <label class="choice-label" for="plan-vaccine-time">Clinic appointment</label><input class="sheet-input" id="plan-vaccine-time" type="datetime-local" value="${toLocalDateTimeValue(recommendedAt)}" />
       <label class="choice-label" for="plan-vaccine-actual">Actual date and time, if given</label><input class="sheet-input" id="plan-vaccine-actual" type="datetime-local" value="${toLocalDateTimeValue(now())}" />
