@@ -13,7 +13,7 @@
       const phoneUserAgent = /iPhone|iPod|Android.*Mobile|Windows Phone|BlackBerry|BB10|Opera Mini|IEMobile/i.test(navigator.userAgent) && !/iPad|Tablet/i.test(navigator.userAgent);
       document.documentElement.classList.add(phoneUserAgent ? "phone-device" : "non-phone-device");
     </script>
-    <link rel="stylesheet" href="./styles.css?v=20261126h" />
+    <link rel="stylesheet" href="./styles.css?v=20261126k" />
   </head>
   <body>
     <main class="phone-only-screen" role="status" aria-labelledby="phone-only-title">
@@ -228,8 +228,8 @@
                 </article>
 
                 <div class="vaccine-actions">
-                  <button class="vaccine-action primary" id="schedule-vaccine" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 2v4m8-4v4M5 9h14m-7 3v5m-2.5-2.5h5" /></svg><span><strong>Add clinic plan</strong></span></button>
-                  <button class="vaccine-action secondary" id="record-vaccine" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c2.5 2 5.3 2.3 7 2.5v5.8c0 4.6-2.8 7.7-7 9.7-4.2-2-7-5.1-7-9.7V5.5C6.7 5.3 9.5 5 12 3Z" /><path d="M12 9.2c-1.5-1.7-4.3-.7-4.3 1.5 0 2 2.3 3.5 4.3 5 2-1.5 4.3-1.5Z" /></svg><span><strong>Record extra dose</strong></span></button>
+                  <button class="vaccine-action primary" id="schedule-vaccine" type="button">Add clinic plan</button>
+                  <button class="vaccine-action secondary" id="record-vaccine" type="button">Record extra dose</button>
                 </div>
 
                 <section class="vaccine-section" aria-labelledby="upcoming-vaccines-title"><div class="vaccine-section-title"><h3 id="upcoming-vaccines-title">Recommended plan <button class="vaccine-info-button" id="vaccine-plan-info" type="button" aria-label="About the recommended vaccine plan">i</button></h3><span id="vaccine-upcoming-summary">Dose series</span></div><div class="vaccine-order-switch" role="group" aria-label="Order vaccine plan"><button class="active" data-vaccine-view="time" type="button" aria-pressed="true">By time</button><button data-vaccine-view="series" type="button" aria-pressed="false">By vaccine</button></div><div class="vaccine-list" id="vaccine-upcoming-list"></div></section>
@@ -260,6 +260,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=20261126j"></script>
+    <script src="./app.js?v=20261126k"></script>
   </body>
 </html>

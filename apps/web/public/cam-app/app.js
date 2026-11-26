@@ -1501,8 +1501,8 @@
     const plannedAt = record?.data?.dueAt;
     const recommendedAt = custom ? null : vaccineRecommendedAt(dose);
     const status = completed ? `Given ${formatDateTime(record.data.administeredAt || record.timestamp)}`
-      : plannedAt ? `Appointment · ${formatDateTime(plannedAt)}`
-        : recommendedAt ? `Rec. · ${formatCalendarDate(recommendedAt)}` : "Appointment needed";
+      : plannedAt ? `Appt. · ${formatDateTime(plannedAt)}`
+        : recommendedAt ? `Rec. · ${formatCalendarDate(recommendedAt)}` : "Appt. needed";
     const overdue = !completed && (plannedAt ? new Date(plannedAt) < now() : recommendedAt && zonedDateKey(recommendedAt) < zonedDateKey(now()));
     const id = vaccinePlanId(series.id, order);
     const product = record?.data?.productName?.trim() || "Not recorded";
