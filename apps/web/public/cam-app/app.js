@@ -23,6 +23,7 @@
     bath: { type: "bath", title: "Bath", defaultDuration: 10 },
     afternoonCare: { type: "afternoonCare", title: "Afternoon care", defaultDuration: 10 },
     sunbathing: { type: "sunbathing", title: "Sunbathing", defaultDuration: 15 },
+    tummyTime: { type: "tummyTime", title: "Tummy time", defaultDuration: 15 },
     walk: { type: "walk", title: "Take a walk", defaultDuration: 30 }
   };
   const AFTERNOON_CARE_ITEMS = [
@@ -44,6 +45,7 @@
     bath: '<svg viewBox="0 0 24 24"><path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6v-3Zm3 0V6a3 3 0 0 1 6 0m-7 14-1 2m13-2 1 2M13 8h3" /></svg>',
     afternoonCare: '<svg viewBox="0 0 24 24"><path d="M5 6.5h2m3 0h9M5 12h2m3 0h9M5 17.5h2m3 0h9M4.6 6.5l.7.7 1.2-1.4M4.6 12l.7.7 1.2-1.4" /></svg>',
     sunbathing: '<svg viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z" /></svg>',
+    tummyTime: '<svg viewBox="0 0 24 24"><circle cx="18" cy="7" r="2"/><path d="M4 13c3-3 6-3 9-2l3 2m-9-1-3 4m7-4 1 4m-8 2h16" /></svg>',
     walk: '<svg viewBox="0 0 24 24"><path d="M13 5a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-2 4 3-2 2 3 3 1m-8-2-2 5-4 2m6-2 3 2 1 5m-6-7-1 6" /></svg>',
     pump: '<svg viewBox="0 0 24 24"><path d="M8 3h6v5H8zM10 8v3m-3 0h6l2 3v7H5v-7l2-3Zm8-5h3v7h-3m-2-2h2" /></svg>',
     vaccine: '<svg viewBox="0 0 24 24"><path d="M12 3c2.5 2 5.3 2.3 7 2.5v5.8c0 4.6-2.8 7.7-7 9.7-4.2-2-7-5.1-7-9.7V5.5C6.7 5.3 9.5 5 12 3Z" /><path d="M12 9.2c-1.5-1.7-4.3-.7-4.3 1.5 0 2 2.3 3.5 4.3 5 2-1.5 4.3-3 4.3-5 0-2.2-2.8-3.2-4.3-1.5Z" /></svg>',
@@ -421,7 +423,7 @@
   }
 
   function timeRangeFor(event) {
-    if (!["feed", "sleep", "bath", "afternoonCare", "sunbathing", "walk", "pump"].includes(event.type)) return "";
+    if (!["feed", "sleep", "bath", "afternoonCare", "sunbathing", "tummyTime", "walk", "pump"].includes(event.type)) return "";
     const durationMin = Number(event.data?.durationMin || 0);
     const end = new Date(event.data?.endAt || event.timestamp);
     const start = event.data?.startAt
@@ -437,7 +439,7 @@
     const start = event.data?.startAt
       ? new Date(event.data.startAt)
       : new Date(end.getTime() - durationMin * 60000);
-    const timed = ["feed", "sleep", "bath", "afternoonCare", "sunbathing", "walk", "pump"].includes(event.type)
+    const timed = ["feed", "sleep", "bath", "afternoonCare", "sunbathing", "tummyTime", "walk", "pump"].includes(event.type)
       && durationMin > 0
       && !Number.isNaN(start.getTime())
       && !Number.isNaN(end.getTime())
@@ -562,7 +564,7 @@
     const time = document.createElement("span");
     time.className = "timeline-time";
     const durationMin = Number(event.data?.durationMin || 0);
-    const timedTypes = ["feed", "sleep", "bath", "afternoonCare", "sunbathing", "walk"];
+    const timedTypes = ["feed", "sleep", "bath", "afternoonCare", "sunbathing", "tummyTime", "walk"];
     time.textContent = durationMin && timedTypes.includes(event.type)
       ? formatDuration(durationMin)
       : formatTime(event.timestamp);
@@ -578,7 +580,7 @@
       detailText = [event.data?.milk, `${Number(event.data?.amount || 0)} ml`, timeRange].filter(Boolean).join(" · ");
     } else if (event.type === "feed") {
       detailText = [event.data?.side, timeRange].filter(Boolean).join(" · ");
-    } else if (["sleep", "bath", "afternoonCare", "sunbathing", "walk"].includes(event.type)) {
+    } else if (["sleep", "bath", "afternoonCare", "sunbathing", "tummyTime", "walk"].includes(event.type)) {
       detailText = timeRange;
     }
     detail.className = "timeline-detail";
@@ -648,6 +650,7 @@
     const sleep = events.filter((event) => event.type === "sleep");
     const baths = events.filter((event) => event.type === "bath");
     const sunbathing = events.filter((event) => event.type === "sunbathing");
+    const tummyTime = events.filter((event) => event.type === "tummyTime");
     const walks = events.filter((event) => event.type === "walk");
     const bottles = feeds.filter((event) => event.data?.mode === "bottle");
     return {
@@ -661,6 +664,7 @@
       sleepMinutes: sleep.reduce((sum, event) => sum + Number(event.data?.durationMin || 0), 0),
       baths: baths.length,
       sunbathing: sunbathing.length,
+      tummyTime: tummyTime.length,
       walks: walks.length
     };
   }
@@ -1297,6 +1301,7 @@
     ];
     if (today.baths) summary.push(`${today.baths} ${today.baths === 1 ? "bath" : "baths"}`);
     if (today.sunbathing) summary.push(`${today.sunbathing} sunbathing ${today.sunbathing === 1 ? "session" : "sessions"}`);
+    if (today.tummyTime) summary.push(`${today.tummyTime} tummy time ${today.tummyTime === 1 ? "session" : "sessions"}`);
     if (today.walks) summary.push(`${today.walks} ${today.walks === 1 ? "walk" : "walks"}`);
     $("#daily-report-copy").textContent = `${summary.join(" · ")}.`;
     $("#daily-tip").textContent = dailyInsight?.suggestion || "Reviewing Cam’s care pattern for a useful suggestion…";
@@ -1314,6 +1319,7 @@
     ];
     if (weekly.baths) weeklySummary.push(`${weekly.baths} ${weekly.baths === 1 ? "bath" : "baths"}`);
     if (weekly.sunbathing) weeklySummary.push(`${weekly.sunbathing} sunbathing ${weekly.sunbathing === 1 ? "session" : "sessions"}`);
+    if (weekly.tummyTime) weeklySummary.push(`${weekly.tummyTime} tummy time ${weekly.tummyTime === 1 ? "session" : "sessions"}`);
     if (weekly.walks) weeklySummary.push(`${weekly.walks} ${weekly.walks === 1 ? "walk" : "walks"}`);
     const shortDate = (date) => new Intl.DateTimeFormat("en", { timeZone: selectedTimeZone(), day: "numeric", month: "short" }).format(date);
     $("#weekly-window-label").textContent = `Baby week ${week.weekNumber} · ${shortDate(week.start)} → ${shortDate(week.end)}`;
@@ -2019,6 +2025,7 @@
         <button class="instant-option" data-other="bath" type="button">${icons.bath}<span>Bath</span></button>
         <button class="instant-option" data-other="afternoonCare" type="button">${icons.afternoonCare}<span>Afternoon care</span></button>
         <button class="instant-option" data-other="sunbathing" type="button">${icons.sunbathing}<span>Sunbathing</span></button>
+        <button class="instant-option" data-other="tummyTime" type="button">${icons.tummyTime}<span>Tummy time</span></button>
         <button class="instant-option" data-other="walk" type="button">${icons.walk}<span>Take a walk</span></button>
       </div>
     `);
@@ -2200,7 +2207,7 @@
   function openEditActivitySheet(eventId) {
     const event = state.events.find((item) => item.id === eventId && item.type !== "vaccine");
     if (!event) return;
-    const timed = ["feed", "sleep", "bath", "afternoonCare", "sunbathing", "walk", "pump"].includes(event.type);
+    const timed = ["feed", "sleep", "bath", "afternoonCare", "sunbathing", "tummyTime", "walk", "pump"].includes(event.type);
     const durationMin = Math.max(1, Number(event.data?.durationMin || 10));
     const note = event.data?.note || "";
     const bottleFields = event.type === "feed" && event.data?.mode === "bottle" ? `
@@ -2292,7 +2299,7 @@
       { label: "Feeds", types: ["feed"], className: "feed" },
       { label: "Diapers", types: ["diaper"], className: "diaper" },
       { label: "Sleep", types: ["sleep"], className: "sleep" },
-      { label: "Other", types: ["bath", "sunbathing", "walk"], className: "other" }
+      { label: "Other", types: ["bath", "afternoonCare", "sunbathing", "tummyTime", "walk"], className: "other" }
     ];
     const laneMarkup = lanes.map((lane) => {
       const points = events.filter((event) => lane.types.includes(event.type)).map((event) => {

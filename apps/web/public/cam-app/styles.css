@@ -631,6 +631,7 @@ svg {
 .timeline-icon.bath { color: var(--amber); background: var(--amber-soft); }
 .timeline-icon.afternoonCare { color: #527a9c; background: #edf5fa; }
 .timeline-icon.sunbathing { color: #b67a21; background: #fff3d8; }
+.timeline-icon.tummyTime { color: #6b59b7; background: #f1ecfc; }
 .timeline-icon.walk { color: var(--blue); background: var(--blue-soft); }
 .timeline-icon.note { color: var(--amber); background: var(--amber-soft); }
 .timeline-copy { min-width: 0; }
@@ -1142,7 +1143,8 @@ svg {
 .instant-options.three { grid-template-columns: repeat(3, 1fr); }
 .instant-options.three .instant-option { min-height: 78px; padding: 8px 4px; }
 .instant-option[data-other="sunbathing"] { border-color: #f3e1b7; color: #b67a21; background: #fff8e9; }
-.instant-option[data-other="walk"] { border-color: #dce9f8; color: #477fc8; background: #eef5ff; }
+.instant-option[data-other="tummyTime"] { border-color: #e6dff7; color: #6b59b7; background: #f5f1fd; }
+.instant-option[data-other="walk"] { grid-column: 1 / -1; min-height: 66px; flex-direction: row; border-color: #dce9f8; color: #477fc8; background: #eef5ff; }
 .instant-option[data-other="afternoonCare"] { border-color: #dce9f8; color: #527a9c; background: #f0f7fb; }
 .care-checklist { display: grid; gap: 7px; }
 .care-check-item { display: flex; align-items: center; gap: 10px; min-height: 39px; padding: 8px 11px; border: 1px solid #e5e1ed; border-radius: 12px; color: #57536d; background: #fbfaff; font-size: .7rem; cursor: pointer; }

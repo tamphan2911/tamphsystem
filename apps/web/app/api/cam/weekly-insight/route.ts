@@ -36,6 +36,7 @@ type CareTotals = {
   sleepMinutes: number;
   baths: number;
   sunbathing: number;
+  tummyTime: number;
   walks: number;
 };
 
@@ -66,6 +67,7 @@ function totalsFor(events: CareEvent[]): CareTotals {
     sleepMinutes: 0,
     baths: 0,
     sunbathing: 0,
+    tummyTime: 0,
     walks: 0,
   };
   for (const event of events) {
@@ -82,6 +84,7 @@ function totalsFor(events: CareEvent[]): CareTotals {
     if (event.type === "sleep") totals.sleepMinutes += numberFromJson(data.durationMin);
     if (event.type === "bath") totals.baths += 1;
     if (event.type === "sunbathing") totals.sunbathing += 1;
+    if (event.type === "tummyTime") totals.tummyTime += 1;
     if (event.type === "walk") totals.walks += 1;
   }
   return totals;
@@ -104,6 +107,7 @@ function averageLoggedDays(days: CareTotals[]) {
     "sleepMinutes",
     "baths",
     "sunbathing",
+    "tummyTime",
     "walks",
   ];
   return Object.fromEntries(
@@ -258,7 +262,7 @@ export async function GET() {
     where: {
       userId: session.userId,
       deletedAt: null,
-      type: { in: ["feed", "diaper", "sleep", "bath", "sunbathing", "walk", "note"] },
+      type: { in: ["feed", "diaper", "sleep", "bath", "sunbathing", "tummyTime", "walk", "note"] },
       timestamp: { gte: previousStart, lt: window.windowEnd },
     },
     select: { type: true, timestamp: true, data: true },

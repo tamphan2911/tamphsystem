@@ -50,6 +50,7 @@ function parseEvent(value: unknown): CamEventInput | null {
     "bath",
     "afternoonCare",
     "sunbathing",
+    "tummyTime",
     "walk",
     "pump",
     "vaccine",
