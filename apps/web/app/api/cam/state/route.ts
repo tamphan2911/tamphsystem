@@ -181,8 +181,25 @@ export async function PUT(request: Request) {
       where: { userId: session.userId },
       select: { settings: true },
     });
+    const archivedVaccines = await tx.camCareEvent.findMany({
+      where: { userId: session.userId, type: "vaccine", deletedAt: null },
+      select: { id: true, data: true },
+    });
+    const archiveById = new Map(
+      archivedVaccines
+        .filter((event) => isRecord(event.data) && typeof event.data.archivedAt === "string")
+        .map((event) => [event.id, event.data as Record<string, unknown>]),
+    );
     const settings = mergeCamSettings(incomingSettings, storedState?.settings) as Prisma.InputJsonValue;
     for (const event of events as CamEventInput[]) {
+      const priorArchive = event.type === "vaccine" ? archiveById.get(event.id) : undefined;
+      if (priorArchive && isRecord(event.data)) {
+        event.data = {
+          ...event.data,
+          archivedAt: priorArchive.archivedAt,
+          archiveVersion: priorArchive.archiveVersion,
+        } as Prisma.InputJsonValue;
+      }
       await tx.camCareEvent.upsert({
         where: {
           userId_id: { userId: session.userId, id: event.id },
