@@ -2503,6 +2503,7 @@
       const administeredAt = completed ? parseDateTimeInput($("#plan-vaccine-actual").value) : null;
       if (Number.isNaN(dueAt.getTime())) { $("#plan-vaccine-time").focus(); return; }
       if (completed && Number.isNaN(administeredAt.getTime())) { $("#plan-vaccine-actual").focus(); return; }
+      if (completed && administeredAt > now()) { $("#plan-vaccine-actual").focus(); showToast("Actual dose cannot be in the future", false); return; }
       const timestamp = completed ? administeredAt : dueAt;
       addActivity(makeEvent("vaccine", series.name, completed ? "Completed" : "Scheduled", timestamp, {
         kind: series.name, planDoseId: planId, seriesId, doseNumber: order, doseTotal: series.doses.length,
@@ -2551,6 +2552,7 @@
       if (!Number.isInteger(doseNumber) || !Number.isInteger(doseTotal) || doseNumber < 1 || doseTotal < doseNumber || doseTotal > 20) { $("#vaccine-dose-total").focus(); showToast("Check dose number and total", false); return; }
       if (Number.isNaN(dueAt.getTime())) { $("#vaccine-planned-at").focus(); return; }
       if (isCompleted && (!actualAt || Number.isNaN(actualAt.getTime()))) { actualInput.focus(); return; }
+      if (isCompleted && actualAt > now()) { actualInput.focus(); showToast("Actual dose cannot be in the future", false); return; }
       const timestamp = isCompleted ? actualAt : dueAt;
       const customSeriesId = event?.data?.planDoseId ? null : event?.data?.customSeriesId || seed?.customSeriesId || uid();
       if (!event && state.events.some((item) => item.type === "vaccine" && item.data?.customSeriesId === customSeriesId && Number(item.data?.doseNumber) === doseNumber)) { showToast("This dose is already recorded", false); return; }
@@ -2587,7 +2589,7 @@
     if (!event) return;
     const dueAt = event.data?.dueAt || event.timestamp;
     openSheet(`
-      <header class="sheet-header"><p class="eyebrow">Mark as done</p><h2 id="sheet-title">${escapeHtml(event.data?.kind || event.title)}</h2><p class="sheet-subtitle">Planned for ${escapeHtml(formatDateTime(dueAt))}. Save when the shot was actually given.</p></header>
+      <header class="sheet-header"><p class="eyebrow">Mark as given</p><h2 id="sheet-title">${escapeHtml(event.data?.kind || event.title)}</h2><p class="sheet-subtitle">Planned for ${escapeHtml(formatDateTime(dueAt))}. Save when the dose was actually given.</p></header>
       <label class="choice-label" for="completed-vaccine-time">Actual dose date and time</label><input class="sheet-input" id="completed-vaccine-time" type="datetime-local" value="${toLocalDateTimeValue(now())}" />
       <label class="choice-label" for="completed-vaccine-note">Note</label><textarea class="sheet-textarea" id="completed-vaccine-note" maxlength="240" placeholder="Clinic, dose, reaction, or anything useful">${escapeHtml(event.data?.note || "")}</textarea>
       <div class="sheet-actions"><button class="sheet-primary" id="confirm-vaccine-complete" type="button">Mark vaccine done</button></div>
@@ -2596,6 +2598,7 @@
       if (!requireParentMutation()) return;
       const administeredAt = parseDateTimeInput($("#completed-vaccine-time").value);
       if (Number.isNaN(administeredAt.getTime())) { $("#completed-vaccine-time").focus(); return; }
+      if (administeredAt > now()) { $("#completed-vaccine-time").focus(); showToast("Actual dose cannot be in the future", false); return; }
       event.timestamp = administeredAt.toISOString();
       event.detail = "Completed";
       event.data = { ...event.data, status: "completed", dueAt: new Date(dueAt).toISOString(), administeredAt: administeredAt.toISOString(), note: $("#completed-vaccine-note").value.trim() };
