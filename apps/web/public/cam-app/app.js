@@ -31,8 +31,9 @@
     { key: "eye", label: "Eye clean", short: "Eye" },
     { key: "moisturizing", label: "Moisturizing", short: "Moist." }
   ];
-  // The 2026 Vietnam EPI schedule (Circular 52/2025/TT-BYT). Combination products
-  // are described by their covered antigens; the clinic confirms the actual product.
+  const VACCINE_SCHEDULE_ADVANCE_DAYS = 10;
+  // Routine age offsets from the 2026 Vietnam EPI schedule (Circular 52/2025/TT-BYT).
+  // Pending dates are displayed 10 days earlier; the clinic confirms actual timing.
   const VACCINE_SERIES = [
     { id: "hepb-birth", name: "Viêm gan B · sơ sinh", tone: "peach", doses: [{ months: 0, timing: "Within 24 hours of birth", detail: "Mũi sơ sinh" }] },
     { id: "bcg", name: "Bệnh lao (BCG)", tone: "lavender", doses: [{ months: 0, days: 28, timing: "Within the first month", detail: "Một mũi" }] },
@@ -113,6 +114,12 @@
   const shiftZonedDays = (date, days) => { const parts = zonedParts(date); return zonedClockOnKey(shiftDateKey(zonedDateKey(date), days), `${String(parts.hour).padStart(2, "0")}:${String(parts.minute).padStart(2, "0")}`); };
   const startOfDay = (date = now()) => zonedClockOnKey(zonedDateKey(date), "00:00");
   const formatTime = (date) => new Intl.DateTimeFormat("en", { timeZone: selectedTimeZone(), hour: "numeric", minute: "2-digit" }).format(new Date(date));
+  const formatTimelineTime = (date) => {
+    const { hour, minute } = zonedParts(date);
+    const displayHour = hour === 0 ? 0 : hour <= 12 ? hour : hour - 12;
+    const period = hour < 12 || (hour === 12 && minute === 0) ? "AM" : "PM";
+    return `${displayHour}:${String(minute).padStart(2, "0")} ${period}`;
+  };
   const validClock = (value, fallback) => typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : fallback;
   const normalizedTimeRules = (settings) => {
     const rules = Object.fromEntries(Object.entries(DEFAULT_TIME_RULES).filter(([key]) => key !== "timeZone").map(([key, fallback]) => [key, validClock(settings?.[key], fallback)]));
@@ -461,7 +468,7 @@
     return icons[type] || icons.note;
   }
 
-  function timeRangeFor(event) {
+  function timeRangeFor(event, format = formatTime) {
     if (!["feed", "sleep", "bath", "afternoonCare", "sunbathing", "tummyTime", "walk", "pump"].includes(event.type)) return "";
     const durationMin = Number(event.data?.durationMin || 0);
     const end = new Date(event.data?.endAt || event.timestamp);
@@ -469,7 +476,7 @@
       ? new Date(event.data.startAt)
       : new Date(end.getTime() - durationMin * 60000);
     if (!durationMin || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "";
-    return `${formatTime(start)}–${formatTime(end)}`;
+    return `${format(start)}–${format(end)}`;
   }
 
   function timelineInterval(event) {
@@ -518,7 +525,7 @@
       if (kinds.has("day")) details.push("Daytime begins");
       if (kinds.has("night")) details.push("Nighttime begins");
       const kind = kinds.has("day") ? "day" : kinds.has("night") ? "night" : kinds.has("care") ? "care" : "date";
-      const checkpointTime = kinds.has("date") ? "0:00 AM" : formatTime(date);
+      const checkpointTime = formatTimelineTime(date);
       const calendarDate = kinds.has("date") && !kinds.has("care") ? ` · ${dateLabel.format(date)}` : "";
       const label = `${checkpointTime}${calendarDate}${details.length ? ` · ${details.join(" · ")}` : ""}`;
       return { date, kind, label };
@@ -590,7 +597,7 @@
     open.dataset.eventId = event.id;
     const time = document.createElement("time");
     time.dateTime = event.timestamp;
-    time.textContent = formatTime(event.timestamp);
+    time.textContent = formatTimelineTime(event.timestamp);
     const duration = document.createElement("span");
     duration.textContent = formatDuration(Number(event.data?.durationMin || 0));
     const label = document.createElement("span");
@@ -627,15 +634,15 @@
     const timedTypes = ["feed", "sleep", "bath", "afternoonCare", "sunbathing", "tummyTime", "walk"];
     time.textContent = durationMin && timedTypes.includes(event.type)
       ? formatDuration(durationMin)
-      : formatTime(event.timestamp);
+      : formatTimelineTime(event.timestamp);
     heading.append(title);
     if (event.type !== "diaper") heading.append(time);
     const detail = document.createElement("small");
-    const timeRange = timeRangeFor(event);
+    const timeRange = timeRangeFor(event, formatTimelineTime);
     const noteText = event.type === "note" ? "" : String(event.data?.note || "").trim();
     let detailText = event.detail || "No extra details";
     if (event.type === "diaper") {
-      detailText = formatTime(event.timestamp);
+      detailText = formatTimelineTime(event.timestamp);
     } else if (event.type === "feed" && event.data?.mode === "bottle") {
       detailText = [event.data?.milk, `${Number(event.data?.amount || 0)} ml`, timeRange].filter(Boolean).join(" · ");
     } else if (event.type === "feed") {
@@ -1117,7 +1124,7 @@
       const eventId = escapeHtml(event.id);
       const { number, gap, durationMin } = details.get(event.id);
       const badge = `${number}${suffix[ordinal.select(number)]}`;
-      const time = formatTime(event.timestamp);
+      const time = formatTimelineTime(event.timestamp);
       const duration = formatDuration(event.timelineContinues ? event.data.durationMin : durationMin);
       const timeAndDuration = `<time datetime="${escapeHtml(event.timestamp)}">${time}</time>${separator}<span>${duration}</span>`;
       if (event.timelineContinues) {
@@ -1487,18 +1494,28 @@
     const birth = new Date(BABY.bornAt);
     const date = new Date(Date.UTC(birth.getUTCFullYear(), birth.getUTCMonth() + dose.months, birth.getUTCDate() + (dose.days || 0), 2));
     // Cam's birth date is in Vietnam; keep the calendar age independent of care-day rules.
-    return zonedClockOnKey(date.toISOString().slice(0, 10), "09:00");
+    const birthKey = birth.toISOString().slice(0, 10);
+    const shiftedKey = shiftDateKey(date.toISOString().slice(0, 10), -VACCINE_SCHEDULE_ADVANCE_DAYS);
+    return zonedClockOnKey(shiftedKey < birthKey ? birthKey : shiftedKey, "09:00");
   }
 
   const vaccinePlanId = (seriesId, order) => `${seriesId}-${order}`;
   const vaccinePlanRecord = (planId) => state.events.find((event) => event.type === "vaccine" && event.data?.planDoseId === planId);
   const isArchivedVaccine = (event) => event.type === "vaccine" && !event.data?.planDoseId && !event.data?.customSeriesId;
+  function vaccinePlannedAt(record) {
+    if (!record) return null;
+    const stored = new Date(record.data?.dueAt || record.timestamp);
+    if (Number.isNaN(stored.getTime())) return null;
+    if (record.data?.status === "completed" || record.data?.scheduleOffsetApplied || isArchivedVaccine(record)) return stored;
+    const shifted = shiftZonedDays(stored, -VACCINE_SCHEDULE_ADVANCE_DAYS);
+    return shifted < BABY.bornAt ? new Date(BABY.bornAt) : shifted;
+  }
 
   function vaccineDoseRow(series, dose, order, record = null, custom = false, timeView = false) {
     const total = series.doses.length;
     const detail = dose.detail === "Một mũi" && total === 1 ? "" : dose.detail;
     const completed = record?.data?.status === "completed";
-    const plannedAt = record?.data?.dueAt;
+    const plannedAt = vaccinePlannedAt(record);
     const recommendedAt = custom ? null : vaccineRecommendedAt(dose);
     const status = completed ? `Given ${formatDateTime(record.data.administeredAt || record.timestamp)}`
       : plannedAt ? `Appt. · ${formatDateTime(plannedAt)}`
@@ -1527,7 +1544,9 @@
 
   function vaccineTimeMarkup(plan) {
     const items = plan.flatMap((series) => series.doses.map((dose, index) => ({ series, dose, order: index + 1, record: series.records[index] })))
-      .map((item) => ({ ...item, at: new Date(item.record?.data?.administeredAt || item.record?.data?.dueAt || vaccineRecommendedAt(item.dose)) }))
+      .map((item) => ({ ...item, at: item.record?.data?.status === "completed"
+        ? new Date(item.record.data.administeredAt || item.record.timestamp)
+        : vaccinePlannedAt(item.record) || vaccineRecommendedAt(item.dose) }))
       .sort((a, b) => a.at - b.at || a.series.name.localeCompare(b.series.name) || a.order - b.order);
     const groups = [];
     items.forEach((item) => {
@@ -1553,11 +1572,12 @@
     const plan = VACCINE_SERIES.map((series) => ({ ...series, records: series.doses.map((_, index) => vaccinePlanRecord(vaccinePlanId(series.id, index + 1))) }));
     const pending = plan.flatMap((series) => series.doses.map((dose, index) => ({ series, dose, index, record: series.records[index] })))
       .filter((item) => item.record?.data?.status !== "completed")
-      .sort((a, b) => new Date(a.record?.data?.dueAt || vaccineRecommendedAt(a.dose)) - new Date(b.record?.data?.dueAt || vaccineRecommendedAt(b.dose)));
+      .sort((a, b) => (vaccinePlannedAt(a.record) || vaccineRecommendedAt(a.dose)) - (vaccinePlannedAt(b.record) || vaccineRecommendedAt(b.dose)));
     const next = pending[0];
     $("#vaccine-upcoming-count").textContent = String(pending.length);
     $("#vaccine-next-name").textContent = next ? `${next.series.name} · ${next.index + 1}/${next.series.doses.length}` : "Plan complete";
-    $("#vaccine-next-time").textContent = next ? next.record?.data?.dueAt ? vaccineDueStatus(next.record.data.dueAt).label : `${next.dose.timing} · confirm with clinic` : "All recommended doses recorded";
+    const nextPlannedAt = vaccinePlannedAt(next?.record);
+    $("#vaccine-next-time").textContent = next ? nextPlannedAt ? vaccineDueStatus(nextPlannedAt).label : `Rec. · ${formatCalendarDate(vaccineRecommendedAt(next.dose))}` : "All recommended doses recorded";
     $("#vaccine-upcoming-summary").textContent = `${pending.length} to review`;
     const view = state.vaccinePlanView === "series" ? "series" : "time";
     $$("[data-vaccine-view]").forEach((button) => { const active = button.dataset.vaccineView === view; button.classList.toggle("active", active); button.setAttribute("aria-pressed", String(active)); });
@@ -2503,12 +2523,12 @@
       const source = state.events.find((event) => event.id === button.dataset.vaccineImport && isArchivedVaccine(event));
       if (!source) return;
       const completed = source.data?.status === "completed";
-      const dueAt = source.data?.dueAt || source.timestamp;
+      const dueAt = completed ? new Date(source.data?.dueAt || source.timestamp) : shiftZonedDays(new Date(source.data?.dueAt || source.timestamp), -VACCINE_SCHEDULE_ADVANCE_DAYS);
       const administeredAt = completed ? source.data?.administeredAt || source.timestamp : null;
       addActivity(makeEvent("vaccine", series.name, completed ? "Completed" : "Scheduled", administeredAt || dueAt, {
         kind: series.name, planDoseId: planId, seriesId, doseNumber: order, doseTotal: series.doses.length,
         status: completed ? "completed" : "scheduled", recommendedAt: vaccineRecommendedAt(series.doses[order - 1]).toISOString(),
-        dueAt: new Date(dueAt).toISOString(), administeredAt: administeredAt ? new Date(administeredAt).toISOString() : null,
+        dueAt: dueAt.toISOString(), scheduleOffsetApplied: true, administeredAt: administeredAt ? new Date(administeredAt).toISOString() : null,
         productName: source.data?.productName || "", originCountry: source.data?.originCountry || "",
         note: source.data?.note || "", archivedSourceId: source.id
       }), "Earlier entry linked to dose");
@@ -2516,7 +2536,7 @@
   }
 
   function openVaccinePlanInfo() {
-    openSheet(`<header class="sheet-header"><p class="eyebrow">About this plan</p><h2 id="sheet-title">Recommended vaccine plan</h2></header><p class="info-copy">Based on Vietnam’s 2026 routine schedule. Recommended ages are guides; confirm products, timing and catch-up with Cam’s clinic.</p><p class="info-copy">Product name and country of origin refer to the vaccine Cam actually receives. Enter them from her vaccination card or ask the clinic.</p><p class="info-copy"><a href="https://tiemchungmorong.vn/document/thong-tu-52-2025-tt-byt-ngay-31-12-2025-cua-bo-y-te-ban-hanh-danh-muc-benh-truyen-nhiem-doi-tuong-va-pham-vi-phai-su-dung-vac-xin-sinh-pham-y-te-bat-buoc" target="_blank" rel="noopener noreferrer">Ministry of Health schedule</a></p><div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>`);
+    openSheet(`<header class="sheet-header"><p class="eyebrow">About this plan</p><h2 id="sheet-title">Recommended vaccine plan</h2></header><p class="info-copy">Based on Vietnam’s 2026 routine schedule. Dates for doses not yet given are shown 10 days earlier than the routine dates; a birth dose never moves before birth. Confirm vaccine age requirements, spacing and appointments with Cam’s clinic.</p><p class="info-copy">Product name and country of origin refer to the vaccine Cam actually receives. Enter them from her vaccination card or ask the clinic.</p><p class="info-copy"><a href="https://tiemchungmorong.vn/document/thong-tu-52-2025-tt-byt-ngay-31-12-2025-cua-bo-y-te-ban-hanh-danh-muc-benh-truyen-nhiem-doi-tuong-va-pham-vi-phai-su-dung-vac-xin-sinh-pham-y-te-bat-buoc" target="_blank" rel="noopener noreferrer">Ministry of Health schedule</a></p><div class="sheet-actions"><button class="sheet-primary" data-close-sheet type="button">Done</button></div>`);
     $('[data-close-sheet]').addEventListener("click", closeSheet);
   }
 
@@ -2549,7 +2569,7 @@
       const timestamp = completed ? administeredAt : dueAt;
       addActivity(makeEvent("vaccine", series.name, completed ? "Completed" : "Scheduled", timestamp, {
         kind: series.name, planDoseId: planId, seriesId, doseNumber: order, doseTotal: series.doses.length,
-        status: completed ? "completed" : "scheduled", recommendedAt: recommendedAt.toISOString(), dueAt: dueAt.toISOString(),
+        status: completed ? "completed" : "scheduled", recommendedAt: recommendedAt.toISOString(), dueAt: dueAt.toISOString(), scheduleOffsetApplied: true,
         administeredAt: completed ? administeredAt.toISOString() : null,
         productName: $("#plan-vaccine-product").value.trim(), originCountry: $("#plan-vaccine-origin").value.trim(),
         note: $("#plan-vaccine-note").value.trim()
@@ -2564,7 +2584,7 @@
     const isCompleted = mode === "record" || event?.data?.status === "completed";
     const defaultPlanned = mode === "schedule" ? zonedClockOnKey(shiftDateKey(zonedDateKey(now()), 1), "09:00") : now();
     const kind = event?.data?.kind || seed?.kind || "";
-    const plannedAt = event?.data?.dueAt || seed?.dueAt || event?.timestamp || defaultPlanned;
+    const plannedAt = vaccinePlannedAt(event) || seed?.dueAt || defaultPlanned;
     const administeredAt = event?.data?.administeredAt || (mode === "record" ? now() : plannedAt);
     const note = event?.data?.note || "";
     openSheet(`
@@ -2605,7 +2625,7 @@
         kind: vaccineKind,
         ...(customSeriesId ? { customSeriesId } : {}), doseNumber, doseTotal,
         status: isCompleted ? "completed" : "scheduled",
-        dueAt: dueAt.toISOString(),
+        dueAt: dueAt.toISOString(), scheduleOffsetApplied: true,
         administeredAt: isCompleted ? actualAt.toISOString() : null,
         productName: $("#vaccine-product").value.trim(),
         originCountry: $("#vaccine-origin").value.trim(),
@@ -2634,7 +2654,7 @@
   function openCompleteVaccineSheet(eventId) {
     const event = state.events.find((item) => item.id === eventId && item.type === "vaccine");
     if (!event) return;
-    const dueAt = event.data?.dueAt || event.timestamp;
+    const dueAt = vaccinePlannedAt(event);
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">Mark as given</p><h2 id="sheet-title">${escapeHtml(event.data?.kind || event.title)}</h2><p class="sheet-subtitle">Planned for ${escapeHtml(formatDateTime(dueAt))}. Save when the dose was actually given.</p></header>
       <label class="choice-label" for="completed-vaccine-time">Actual dose date and time</label><input class="sheet-input" id="completed-vaccine-time" type="datetime-local" value="${toLocalDateTimeValue(now())}" />
@@ -2650,7 +2670,7 @@
       if (administeredAt > now()) { $("#completed-vaccine-time").focus(); showToast("Actual dose cannot be in the future", false); return; }
       event.timestamp = administeredAt.toISOString();
       event.detail = "Completed";
-      event.data = { ...event.data, status: "completed", dueAt: new Date(dueAt).toISOString(), administeredAt: administeredAt.toISOString(), productName: $("#completed-vaccine-product").value.trim(), originCountry: $("#completed-vaccine-origin").value.trim(), note: $("#completed-vaccine-note").value.trim() };
+      event.data = { ...event.data, status: "completed", dueAt: dueAt.toISOString(), scheduleOffsetApplied: true, administeredAt: administeredAt.toISOString(), productName: $("#completed-vaccine-product").value.trim(), originCountry: $("#completed-vaccine-origin").value.trim(), note: $("#completed-vaccine-note").value.trim() };
       saveState();
       renderAll();
       closeSheet();
@@ -2671,7 +2691,7 @@
     const completed = event.data?.status === "completed";
     openSheet(`
       <header class="sheet-header"><p class="eyebrow">${completed ? "Given dose" : "Scheduled dose"}${event.data?.doseNumber ? ` · ${event.data.doseNumber} of ${event.data.doseTotal}` : ""}</p><h2 id="sheet-title">${escapeHtml(event.data?.kind || event.title)}</h2><p class="sheet-subtitle">${escapeHtml(event.data?.note || "No note added")}</p></header>
-      <div class="vaccine-detail-grid"><div><span>Planned</span><strong>${escapeHtml(formatDateTime(event.data?.dueAt || event.timestamp))}</strong></div>${completed ? `<div><span>Actually taken</span><strong>${escapeHtml(formatDateTime(event.data?.administeredAt || event.timestamp))}</strong></div>` : ""}${productRows}<div><span>Status</span><strong>${completed ? "Completed" : vaccineDueStatus(event.data?.dueAt || event.timestamp).label}</strong></div></div>
+      <div class="vaccine-detail-grid"><div><span>Planned</span><strong>${escapeHtml(formatDateTime(vaccinePlannedAt(event)))}</strong></div>${completed ? `<div><span>Actually taken</span><strong>${escapeHtml(formatDateTime(event.data?.administeredAt || event.timestamp))}</strong></div>` : ""}${productRows}<div><span>Status</span><strong>${completed ? "Completed" : vaccineDueStatus(vaccinePlannedAt(event)).label}</strong></div></div>
       <div class="sheet-actions two"><button class="sheet-secondary" id="edit-vaccine-record" type="button">Edit</button>${completed ? '<button class="sheet-primary" data-close-sheet type="button">Done</button>' : '<button class="sheet-primary" id="complete-vaccine-record" type="button">Mark done</button>'}</div>
       <div class="sheet-actions"><button class="sheet-danger" id="delete-vaccine-record" type="button">Delete vaccine record</button></div>
     `);
